@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package im;
+
+option java_package = "com.im.proto";
+option java_multiple_files = true;
+
+/**
+ * 协议命令码枚举
+ * 占用 1 byte，范围 0-255
+ */
+enum Command {
+  CMD_UNKNOWN = 0;
+
+  // 心跳
+  CMD_HEARTBEAT_REQ = 1;
+  CMD_HEARTBEAT_RESP = 2;
+
+  // 认证
+  CMD_LOGIN_REQ = 10;
+  CMD_LOGIN_RESP = 11;
+  CMD_REGISTER_REQ = 12;
+  CMD_REGISTER_RESP = 13;
+
+  // 单聊
+  CMD_SINGLE_MSG_REQ = 20;
+  CMD_SINGLE_MSG_RESP = 21;
+
+  // 群聊
+  CMD_GROUP_MSG_REQ = 30;
+  CMD_GROUP_MSG_RESP = 31;
+
+  // ACK
+  CMD_MESSAGE_ACK = 40;
+
+  // 系统推送
+  CMD_SYSTEM_PUSH = 50;
+
+  // 群管理
+  CMD_CREATE_GROUP_REQ = 60;
+  CMD_CREATE_GROUP_RESP = 61;
+  CMD_JOIN_GROUP_REQ = 62;
+  CMD_LEAVE_GROUP_REQ = 63;
+  CMD_KICK_MEMBER_REQ = 64;
+  CMD_DISSOLVE_GROUP_REQ = 65;
+  CMD_GROUP_OP_RESP = 66;
+  CMD_GROUP_NOTICE = 67;
+
+  // 错误
+  CMD_ERROR_RESP = 99;
+}

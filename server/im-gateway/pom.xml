@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.im</groupId>
+        <artifactId>server</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>im-gateway</artifactId>
+    <name>IM Gateway</name>
+    <description>TCP gateway with Netty and Protobuf</description>
+    <packaging>jar</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.im</groupId>
+            <artifactId>im-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.im</groupId>
+            <artifactId>server-im-protocol</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.im</groupId>
+            <artifactId>im-gateway-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.im</groupId>
+            <artifactId>im-user-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.im</groupId>
+            <artifactId>im-message-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.im</groupId>
+            <artifactId>im-session-api</artifactId>
+        </dependency>
+        <!-- Implementation dependencies for in-process injection -->
+        <dependency>
+            <groupId>com.im</groupId>
+            <artifactId>im-user</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.im</groupId>
+            <artifactId>im-message</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.im</groupId>
+            <artifactId>im-session</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.im</groupId>
+            <artifactId>im-push</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.im</groupId>
+            <artifactId>im-group-api</artifactId>
+        </dependency>
+        <!-- Implementation dependency for in-process injection -->
+        <dependency>
+            <groupId>com.im</groupId>
+            <artifactId>im-group</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

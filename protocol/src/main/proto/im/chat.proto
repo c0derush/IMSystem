@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package im;
+
+option java_package = "com.im.proto";
+option java_multiple_files = true;
+
+/**
+ * 文本消息
+ * 单聊时 receiverId 必填，groupId = 0
+ * 群聊时 groupId 必填，receiverId = 0
+ */
+message TextMessage {
+  // 服务端分配的全局消息ID
+  int64 messageId = 1;
+
+  // 发送者ID
+  int64 senderId = 2;
+
+  // 接收者ID（单聊用）
+  int64 receiverId = 3;
+
+  // 群ID（群聊用）
+  int64 groupId = 4;
+
+  // 消息内容
+  string content = 5;
+
+  // 发送时间戳（毫秒）
+  int64 timestamp = 6;
+
+  // 客户端生成的幂等键（用于去重）
+  string clientMessageId = 7;
+}
+
+/**
+ * 消息发送响应
+ */
+message MessageSendResp {
+  bool success = 1;
+  int64 messageId = 2;
+  string errorMessage = 3;
+  string clientMessageId = 4;
+}
+
+/**
+ * 消息 ACK
+ */
+message MessageAck {
+  int64 messageId = 1;
+  // 0: stored, 1: delivered, 2: read
+  int32 status = 2;
+}

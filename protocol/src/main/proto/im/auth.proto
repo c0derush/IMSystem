@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package im;
+
+option java_package = "com.im.proto";
+option java_multiple_files = true;
+
+/**
+ * 登录请求
+ */
+message LoginReq {
+  string username = 1;
+  string password = 2;
+}
+
+/**
+ * 登录响应
+ */
+message LoginResp {
+  bool success = 1;
+  string token = 2;
+  int64 userId = 3;
+  string nickname = 4;
+  string errorMessage = 5;
+}
+
+/**
+ * 注册请求
+ */
+message RegisterReq {
+  string username = 1;
+  string password = 2;
+  string nickname = 3;
+}
+
+/**
+ * 注册响应
+ */
+message RegisterResp {
+  bool success = 1;
+  string token = 2;
+  int64 userId = 3;
+  string nickname = 4;
+  string errorMessage = 5;
+}

@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package im;
+
+option java_package = "com.im.proto";
+option java_multiple_files = true;
+
+/**
+ * 心跳请求
+ */
+message HeartbeatReq {
+  int64 timestamp = 1;
+}
+
+/**
+ * 心跳响应
+ */
+message HeartbeatResp {
+  int64 timestamp = 1;
+}

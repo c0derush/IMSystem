@@ -1,0 +1,20 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: im-gateway
+  datasource:
+    url: jdbc:mysql://localhost:3306/im_system
+    username: root
+    password: BUPThappy7
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+netty:
+  tcp:
+    port: 8081
+    reader-idle-seconds: 120

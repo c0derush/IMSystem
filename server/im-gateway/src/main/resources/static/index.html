@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IM 聊天</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f0f2f5;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .app { display: flex; height: 100vh; }
+
+        /* Left Nav */
+        .left-nav {
+            width: 60px;
+            background: #2c3e50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 0;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+        .nav-avatar {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: #3498db;
+            color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+        }
+        .nav-item {
+            width: 40px; height: 40px;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            color: #bdc3c7;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: rgba(255,255,255,0.15); color: white; }
+        .nav-item svg { width: 22px; height: 22px; }
+        .nav-badge {
+            position: absolute; top: 2px; right: 2px;
+            min-width: 16px; height: 16px;
+            background: #e74c3c; color: white;
+            border-radius: 8px; font-size: 10px;
+            display: flex; align-items: center; justify-content: center;
+            padding: 0 4px;
+        }
+
+        /* Middle Panel */
+        .middle-panel {
+            width: 300px;
+            background: #fff;
+            border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+        .panel-header {
+            padding: 16px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .panel-title { font-size: 18px; font-weight: 600; color: #333; }
+        .panel-actions { display: flex; gap: 8px; }
+        .icon-btn {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            border: none; background: #f5f5f5;
+            cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            color: #666; transition: background 0.2s;
+        }
+        .icon-btn:hover { background: #e8e8e8; }
+        .icon-btn svg { width: 16px; height: 16px; }
+
+        .search-box {
+            padding: 10px 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .search-box input {
+            width: 100%; padding: 8px 12px;
+            border: 1px solid #e0e0e0; border-radius: 6px;
+            background: #f5f5f5; font-size: 13px;
+            outline: none;
+        }
+        .search-box input:focus { background: #fff; border-color: #3498db; }
+
+        .list-container { flex: 1; overflow-y: auto; }
+        .list-section-title {
+            padding: 8px 16px; font-size: 12px;
+            color: #999; font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .list-item {
+            display: flex; align-items: center;
+            padding: 10px 16px; cursor: pointer;
+            transition: background 0.15s;
+            position: relative;
+        }
+        .list-item:hover { background: #f5f7fa; }
+        .list-item.active { background: #e3f2fd; }
+        .list-avatar {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; display: flex;
+            align-items: center; justify-content: center;
+            font-size: 15px; font-weight: 500;
+            flex-shrink: 0; margin-right: 12px;
+            user-select: none;
+        }
+        .list-avatar.group {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .list-info { flex: 1; min-width: 0; }
+        .list-name {
+            font-size: 14px; color: #333;
+            font-weight: 500;
+            white-space: nowrap; overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .list-meta {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            margin-top: 2px;
+        }
+        .list-preview {
+            font-size: 12px; color: #999;
+            white-space: nowrap; overflow: hidden;
+            text-overflow: ellipsis; flex: 1;
+        }
+        .list-time { font-size: 11px; color: #bbb; margin-left: 6px; }
+        .list-unread {
+            position: absolute; right: 12px; top: 50%;
+            transform: translateY(-50%);
+            min-width: 18px; height: 18px;
+            background: #e74c3c; color: white;
+            border-radius: 9px; font-size: 11px;
+            display: flex; align-items: center;
+            justify-content: center; padding: 0 5px;
+        }
+        .contact-actions {
+            display: none; gap: 6px;
+            margin-left: 8px;
+        }
+        .list-item:hover .contact-actions { display: flex; }
+        .contact-actions .icon-btn {
+            width: 26px; height: 26px;
+            background: transparent;
+        }
+        .contact-actions .icon-btn:hover { background: #e0e0e0; }
+
+        .empty-state {
+            padding: 40px 20px; text-align: center;
+            color: #bbb; font-size: 13px;
+        }
+
+        /* Right Chat Area */
+        .chat-area {
+            flex: 1; display: flex;
+            flex-direction: column;
+            background: #f5f5f5;
+        }
+        .chat-header {
+            padding: 14px 20px;
+            background: #fff;
+            border-bottom: 1px solid #e8e8e8;
+            display: flex; align-items: center;
+            justify-content: space-between;
+        }
+        .chat-header-info { display: flex; align-items: center; }
+        .chat-header-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; display: flex;
+            align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 500;
+            margin-right: 10px;
+        }
+        .chat-header-avatar.group {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .chat-header-name { font-size: 15px; font-weight: 600; color: #333; }
+        .chat-header-type {
+            font-size: 11px; color: #999;
+            margin-left: 6px; background: #f0f0f0;
+            padding: 1px 6px; border-radius: 4px;
+        }
+        .chat-header-actions { display: flex; gap: 8px; }
+
+        .chat-messages {
+            flex: 1; overflow-y: auto;
+            padding: 20px;
+        }
+        .msg {
+            display: flex; margin-bottom: 16px;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .msg.own { flex-direction: row-reverse; }
+        .msg-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; display: flex;
+            align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 500;
+            flex-shrink: 0; user-select: none;
+        }
+        .msg.group { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .msg-body { max-width: 60%; margin: 0 10px; }
+        .msg-sender {
+            font-size: 11px; color: #999;
+            margin-bottom: 3px;
+        }
+        .msg.own .msg-sender { text-align: right; }
+        .msg-bubble {
+            padding: 10px 14px; border-radius: 14px;
+            font-size: 14px; line-height: 1.5;
+            word-break: break-word;
+        }
+        .msg.own .msg-bubble {
+            background: #95ec69; color: #333;
+            border-bottom-right-radius: 4px;
+        }
+        .msg:not(.own) .msg-bubble {
+            background: #fff; color: #333;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .msg.system {
+            justify-content: center;
+        }
+        .msg.system .msg-bubble {
+            background: rgba(0,0,0,0.05); color: #888;
+            font-size: 12px; padding: 4px 10px;
+            border-radius: 10px;
+        }
+        .msg-time {
+            font-size: 10px; color: #ccc;
+            margin-top: 3px;
+        }
+        .msg.own .msg-time { text-align: right; }
+
+        .chat-input-area {
+            padding: 12px 20px 16px;
+            background: #fff;
+            border-top: 1px solid #e8e8e8;
+        }
+        .chat-toolbar {
+            display: flex; gap: 10px;
+            margin-bottom: 8px;
+        }
+        .chat-toolbar .icon-btn {
+            background: transparent; width: 28px; height: 28px;
+        }
+        .chat-input-row {
+            display: flex; gap: 10px; align-items: flex-end;
+        }
+        .chat-input-row textarea {
+            flex: 1; resize: none; border: none;
+            outline: none; font-size: 14px;
+            line-height: 1.5; max-height: 120px;
+            font-family: inherit;
+        }
+        .send-btn {
+            padding: 8px 20px; border: none;
+            border-radius: 6px; background: #07c160;
+            color: white; font-size: 14px;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .send-btn:hover { background: #06ad56; }
+        .send-btn:active { background: #059a4c; }
+
+        .empty-chat {
+            flex: 1; display: flex;
+            flex-direction: column;
+            align-items: center; justify-content: center;
+            color: #ccc;
+        }
+        .empty-chat svg { width: 80px; height: 80px; margin-bottom: 16px; opacity: 0.3; }
+        .empty-chat p { font-size: 14px; }
+
+        /* Login Mask */
+        .login-mask {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: flex; align-items: center;
+            justify-content: center; z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        .login-box {
+            background: white; padding: 32px;
+            border-radius: 12px; width: 380px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        .login-logo {
+            text-align: center; margin-bottom: 24px;
+        }
+        .login-logo h2 { font-size: 22px; color: #333; }
+        .login-logo p { font-size: 13px; color: #999; margin-top: 4px; }
+        .login-tabs {
+            display: flex; margin-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .login-tab {
+            flex: 1; padding: 10px;
+            text-align: center; cursor: pointer;
+            font-size: 15px; color: #666;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px; transition: all 0.2s;
+        }
+        .login-tab.active { color: #07c160; border-bottom-color: #07c160; }
+        .login-field { margin-bottom: 14px; }
+        .login-field label {
+            display: block; font-size: 12px;
+            color: #666; margin-bottom: 4px;
+        }
+        .login-field input {
+            width: 100%; padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px; font-size: 14px;
+            outline: none; transition: border-color 0.2s;
+        }
+        .login-field input:focus { border-color: #07c160; }
+        .login-btn {
+            width: 100%; padding: 12px;
+            border: none; border-radius: 8px;
+            background: #07c160; color: white;
+            font-size: 15px; cursor: pointer;
+            margin-top: 6px; transition: background 0.2s;
+        }
+        .login-btn:hover { background: #06ad56; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.4);
+            display: flex; align-items: center;
+            justify-content: center; z-index: 2000;
+        }
+        .modal-box {
+            background: white; padding: 24px;
+            border-radius: 12px; width: 340px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+        .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        .modal-field { margin-bottom: 12px; }
+        .modal-field input {
+            width: 100%; padding: 10px 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px; font-size: 14px;
+            outline: none;
+        }
+        .modal-field input:focus { border-color: #3498db; }
+        .modal-btns {
+            display: flex; justify-content: flex-end;
+            gap: 10px; margin-top: 16px;
+        }
+        .modal-btns button {
+            padding: 8px 16px; border-radius: 6px;
+            border: none; font-size: 13px;
+            cursor: pointer;
+        }
+        .btn-cancel { background: #f0f0f0; color: #666; }
+        .btn-confirm { background: #3498db; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .hidden { display: none !important; }
+
+        /* Tooltip / Dropdown */
+        .dropdown-menu {
+            position: absolute; background: white;
+            border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            padding: 6px 0; z-index: 100;
+            min-width: 140px;
+        }
+        .dropdown-item {
+            padding: 8px 16px; font-size: 13px;
+            cursor: pointer; color: #333;
+        }
+        .dropdown-item:hover { background: #f5f5f5; }
+        .dropdown-item.danger { color: #e74c3c; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d0d0d0; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #aaa; }
+    </style>
+</head>
+<body>
+    <div id="app" class="app hidden">
+        <!-- Left Nav -->
+        <div class="left-nav">
+            <div class="nav-avatar" id="navAvatar">?</div>
+            <div class="nav-item active" id="navMessages" title="消息">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span class="nav-badge hidden" id="navBadge">0</span>
+            </div>
+            <div class="nav-item" id="navContacts" title="联系人">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div style="flex:1"></div>
+            <div class="nav-item" id="navLogout" title="退出">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            </div>
+        </div>
+
+        <!-- Middle Panel -->
+        <div class="middle-panel">
+            <div class="panel-header">
+                <div class="panel-title" id="panelTitle">消息</div>
+                <div class="panel-actions">
+                    <button class="icon-btn" id="btnAdd" title="添加">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索...">
+            </div>
+            <div class="list-container" id="listContainer">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+
+        <!-- Right Chat Area -->
+        <div class="chat-area" id="chatArea">
+            <div class="empty-chat" id="emptyChat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <p>选择一个会话开始聊天</p>
+            </div>
+            <div id="activeChat" class="hidden" style="display:flex;flex-direction:column;height:100%;">
+                <div class="chat-header">
+                    <div class="chat-header-info">
+                        <div class="chat-header-avatar" id="chatAvatar">?</div>
+                        <div>
+                            <span class="chat-header-name" id="chatName">--</span>
+                            <span class="chat-header-type" id="chatType">--</span>
+                        </div>
+                    </div>
+                    <div class="chat-header-actions" id="chatHeaderActions"></div>
+                </div>
+                <div class="chat-messages" id="chatMessages"></div>
+                <div class="chat-input-area">
+                    <div class="chat-toolbar">
+                        <button class="icon-btn" title="表情"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
+                    </div>
+                    <div class="chat-input-row">
+                        <textarea id="messageInput" rows="3" placeholder="输入消息..." style="background:transparent;"></textarea>
+                        <button class="send-btn" id="sendBtn">发送</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="login-mask" id="loginMask">
+        <div class="login-box">
+            <div class="login-logo">
+                <h2>IM 聊天</h2>
+                <p>简单、即时的通讯体验</p>
+            </div>
+            <div class="login-tabs">
+                <div class="login-tab active" id="tabLogin">登录</div>
+                <div class="login-tab" id="tabRegister">注册</div>
+            </div>
+            <div id="loginForm">
+                <div class="login-field"><label>用户名</label><input type="text" id="username" placeholder="请输入用户名"></div>
+                <div class="login-field"><label>密码</label><input type="password" id="password" placeholder="请输入密码"></div>
+                <div class="login-field hidden" id="nicknameField"><label>昵称</label><input type="text" id="nickname" placeholder="请输入昵称"></div>
+                <button class="login-btn" id="actionBtn">登录</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay hidden" id="modalOverlay">
+        <div class="modal-box" id="modalBox">
+            <div class="modal-title" id="modalTitle">标题</div>
+            <div id="modalBody"></div>
+            <div class="modal-btns" id="modalBtns"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '';
+        let currentUser = null;
+        let activeTab = 'messages'; // messages | contacts
+        let conversations = []; // { id, type, targetId, name, avatarText, lastMessage, lastTime, unread, messages: [] }
+        let friends = [];
+        let groups = [];
+        let currentConvId = null;
+        let eventSource = null;
+        let userCache = {}; // userId -> { nickname }
+        let isLoginMode = true;
+
+        // ---- Auth ----
+        function switchTab(mode) {
+            isLoginMode = mode === 'login';
+            document.getElementById('tabLogin').classList.toggle('active', isLoginMode);
+            document.getElementById('tabRegister').classList.toggle('active', !isLoginMode);
+            document.getElementById('nicknameField').classList.toggle('hidden', isLoginMode);
+            document.getElementById('actionBtn').textContent = isLoginMode ? '登录' : '注册';
+        }
+
+        document.getElementById('tabLogin').onclick = () => switchTab('login');
+        document.getElementById('tabRegister').onclick = () => switchTab('register');
+
+        document.getElementById('actionBtn').onclick = async () => {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const nickname = document.getElementById('nickname').value.trim();
+            if (!username || !password) return alert('请输入用户名和密码');
+            try {
+                const url = isLoginMode ? '/api/auth/login' : '/api/auth/register';
+                const body = isLoginMode ? { username, password } : { username, password, nickname: nickname || username };
+                const res = await fetch(`${API_BASE}${url}`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    currentUser = { userId: data.userId, nickname: data.nickname, token: data.token };
+                    onLogin();
+                } else {
+                    alert(data.error || '操作失败');
+                }
+            } catch (e) { alert('请求失败: ' + e.message); }
+        };
+
+        async function onLogin() {
+            document.getElementById('loginMask').classList.add('hidden');
+            document.getElementById('app').classList.remove('hidden');
+            document.getElementById('navAvatar').textContent = currentUser.nickname.charAt(0).toUpperCase();
+            userCache[currentUser.userId] = { nickname: currentUser.nickname };
+            await loadFriends();
+            await loadGroups();
+            startSSE();
+            renderList();
+        }
+
+        document.getElementById('navLogout').onclick = () => {
+            if (!confirm('确定要退出登录吗？')) return;
+            currentUser = null;
+            conversations = []; friends = []; groups = [];
+            currentConvId = null; userCache = {};
+            if (eventSource) { eventSource.close(); eventSource = null; }
+            document.getElementById('app').classList.add('hidden');
+            document.getElementById('loginMask').classList.remove('hidden');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('nickname').value = '';
+            switchTab('login');
+        };
+
+        // ---- Data Loading ----
+        async function loadFriends() {
+            try {
+                const res = await fetch(`${API_BASE}/api/friends?userId=${currentUser.userId}`);
+                friends = await res.json();
+                friends.forEach(f => userCache[f.userId] = f);
+            } catch (e) { console.error('加载好友失败', e); }
+        }
+
+        async function loadGroups() {
+            // 没有直接获取群列表的 API，需要从会话中推断或者调用其他接口
+            // 当前后端没有 listGroups API，暂时只维护本地加入的群
+        }
+
+        async function fetchUser(userId) {
+            if (userCache[userId]) return userCache[userId];
+            try {
+                const res = await fetch(`${API_BASE}/api/users/${userId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    userCache[userId] = data;
+                    return data;
+                }
+            } catch (e) { console.error('获取用户失败', e); }
+            return { userId, nickname: '用户' + userId };
+        }
+
+        async function fetchGroup(groupId) {
+            try {
+                const res = await fetch(`${API_BASE}/api/groups/${groupId}`);
+                if (res.ok) return await res.json();
+            } catch (e) {}
+            return { groupId, name: '群 ' + groupId };
+        }
+
+        // ---- Conversations ----
+        function getConvId(type, targetId) {
+            return `${type}_${targetId}`;
+        }
+
+        function ensureConv(type, targetId, name, avatarText) {
+            const id = getConvId(type, targetId);
+            let conv = conversations.find(c => c.id === id);
+            if (!conv) {
+                conv = { id, type, targetId, name: name || (type==='private'?'私聊':'群聊'), avatarText: avatarText || '?', messages: [], unread: 0, lastMessage: '', lastTime: 0 };
+                conversations.push(conv);
+            }
+            return conv;
+        }
+
+        function openConv(type, targetId, name, avatarText) {
+            const conv = ensureConv(type, targetId, name, avatarText);
+            currentConvId = conv.id;
+            conv.unread = 0;
+            renderList();
+            renderChat();
+            updateNavBadge();
+        }
+
+        // ---- SSE ----
+        function startSSE() {
+            if (eventSource) eventSource.close();
+            eventSource = new EventSource(`${API_BASE}/api/sse/subscribe?userId=${currentUser.userId}`);
+            eventSource.addEventListener('message', async (e) => {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data.type === 'privateMsg') {
+                        const peerId = data.senderId === currentUser.userId ? data.receiverId : data.senderId;
+                        const sender = await fetchUser(data.senderId);
+                        const conv = ensureConv('private', peerId, sender.nickname, sender.nickname?.charAt(0)?.toUpperCase());
+                        conv.messages.push({
+                            messageId: data.messageId,
+                            senderId: data.senderId,
+                            content: data.content,
+                            timestamp: data.timestamp,
+                            own: data.senderId === currentUser.userId
+                        });
+                        conv.lastMessage = data.content;
+                        conv.lastTime = data.timestamp;
+                        if (currentConvId !== conv.id) conv.unread++;
+                        if (currentConvId === conv.id) renderChatMessages();
+                        renderList();
+                        updateNavBadge();
+                    } else if (data.type === 'groupMsg') {
+                        const group = await fetchGroup(data.groupId);
+                        const sender = await fetchUser(data.senderId);
+                        const conv = ensureConv('group', data.groupId, group.name, '群');
+                        conv.messages.push({
+                            messageId: data.messageId,
+                            senderId: data.senderId,
+                            senderName: sender.nickname,
+                            content: data.content,
+                            timestamp: data.timestamp,
+                            own: data.senderId === currentUser.userId
+                        });
+                        conv.lastMessage = `${sender.nickname}: ${data.content}`;
+                        conv.lastTime = data.timestamp;
+                        if (currentConvId !== conv.id) conv.unread++;
+                        if (currentConvId === conv.id) renderChatMessages();
+                        renderList();
+                        updateNavBadge();
+                    } else if (data.type === 'groupNotice') {
+                        const noticeText = {
+                            1: `用户 ${data.targetUserId} 加入了群`,
+                            2: `用户 ${data.targetUserId} 退出了群`,
+                            3: `用户 ${data.targetUserId} 被踢出群`,
+                            4: `群已被解散`
+                        }[data.noticeType] || '群通知';
+                        const conv = ensureConv('group', data.groupId, null, '群');
+                        conv.messages.push({ system: true, content: noticeText, timestamp: Date.now() });
+                        conv.lastMessage = noticeText;
+                        conv.lastTime = Date.now();
+                        if (currentConvId === conv.id) renderChatMessages();
+                        renderList();
+                        if (data.noticeType === 4) {
+                            setTimeout(() => {
+                                conversations = conversations.filter(c => c.id !== getConvId('group', data.groupId));
+                                if (currentConvId === getConvId('group', data.groupId)) { currentConvId = null; renderChat(); }
+                                renderList();
+                            }, 1500);
+                        }
+                    }
+                } catch (err) { console.error('SSE处理错误', err); }
+            });
+            eventSource.onerror = () => console.log('SSE连接错误');
+        }
+
+        function updateNavBadge() {
+            const total = conversations.reduce((sum, c) => sum + c.unread, 0);
+            const badge = document.getElementById('navBadge');
+            badge.textContent = total > 99 ? '99+' : total;
+            badge.classList.toggle('hidden', total === 0);
+        }
+
+        // ---- Navigation ----
+        document.getElementById('navMessages').onclick = () => {
+            activeTab = 'messages';
+            document.getElementById('navMessages').classList.add('active');
+            document.getElementById('navContacts').classList.remove('active');
+            renderList();
+        };
+        document.getElementById('navContacts').onclick = () => {
+            activeTab = 'contacts';
+            document.getElementById('navContacts').classList.add('active');
+            document.getElementById('navMessages').classList.remove('active');
+            renderList();
+        };
+
+        // ---- Rendering ----
+        function renderList() {
+            const container = document.getElementById('listContainer');
+            const title = document.getElementById('panelTitle');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+
+            if (activeTab === 'messages') {
+                title.textContent = '消息';
+                const filtered = conversations.filter(c => c.name.toLowerCase().includes(search));
+                filtered.sort((a, b) => (b.lastTime || 0) - (a.lastTime || 0));
+                container.innerHTML = filtered.length ? filtered.map(c => `
+                    <div class="list-item ${currentConvId === c.id ? 'active' : ''}" data-id="${c.id}">
+                        <div class="list-avatar ${c.type==='group'?'group':''}">${c.avatarText}</div>
+                        <div class="list-info">
+                            <div class="list-name">${escapeHtml(c.name)}</div>
+                            <div class="list-meta">
+                                <div class="list-preview">${escapeHtml(c.lastMessage || '')}</div>
+                                <div class="list-time">${formatTime(c.lastTime)}</div>
+                            </div>
+                        </div>
+                        ${c.unread ? `<div class="list-unread">${c.unread > 99 ? '99+' : c.unread}</div>` : ''}
+                    </div>
+                `).join('') : '<div class="empty-state">暂无消息</div>';
+            } else {
+                title.textContent = '联系人';
+                let html = '';
+                const filteredFriends = friends.filter(f => (f.nickname || f.username).toLowerCase().includes(search));
+                html += `<div class="list-section-title">我的好友 (${filteredFriends.length})</div>`;
+                html += filteredFriends.map(f => `
+                    <div class="list-item" data-fid="${f.userId}">
+                        <div class="list-avatar">${(f.nickname||f.username).charAt(0).toUpperCase()}</div>
+                        <div class="list-info">
+                            <div class="list-name">${escapeHtml(f.nickname || f.username)}</div>
+                            <div class="list-meta"><div class="list-preview">ID: ${f.userId}</div></div>
+                        </div>
+                        <div class="contact-actions">
+                            <button class="icon-btn" title="聊天" onclick="event.stopPropagation(); openPrivateChat(${f.userId})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+                            <button class="icon-btn" title="删除" onclick="event.stopPropagation(); removeFriend(${f.userId})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                        </div>
+                    </div>
+                `).join('');
+                const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(search));
+                html += `<div class="list-section-title">我的群聊 (${filteredGroups.length})</div>`;
+                html += filteredGroups.map(g => `
+                    <div class="list-item" data-gid="${g.groupId}">
+                        <div class="list-avatar group">群</div>
+                        <div class="list-info">
+                            <div class="list-name">${escapeHtml(g.name)}</div>
+                            <div class="list-meta"><div class="list-preview">ID: ${g.groupId}</div></div>
+                        </div>
+                        <div class="contact-actions">
+                            <button class="icon-btn" title="聊天" onclick="event.stopPropagation(); openGroupChat(${g.groupId}, '${escapeHtml(g.name)}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+                        </div>
+                    </div>
+                `).join('');
+                if (!filteredFriends.length && !filteredGroups.length) html += '<div class="empty-state">暂无联系人</div>';
+                container.innerHTML = html;
+            }
+
+            container.querySelectorAll('.list-item').forEach(item => {
+                item.onclick = () => {
+                    const cid = item.dataset.id;
+                    if (cid) {
+                        currentConvId = cid;
+                        const conv = conversations.find(c => c.id === cid);
+                        if (conv) { conv.unread = 0; renderChat(); renderList(); updateNavBadge(); }
+                    }
+                    const fid = item.dataset.fid;
+                    if (fid) openPrivateChat(Number(fid));
+                    const gid = item.dataset.gid;
+                    if (gid) openGroupChat(Number(gid), item.querySelector('.list-name').textContent);
+                };
+            });
+        }
+
+        function renderChat() {
+            const empty = document.getElementById('emptyChat');
+            const active = document.getElementById('activeChat');
+            const conv = conversations.find(c => c.id === currentConvId);
+            if (!conv) {
+                empty.classList.remove('hidden');
+                active.classList.add('hidden');
+                active.style.display = 'none';
+                return;
+            }
+            empty.classList.add('hidden');
+            active.classList.remove('hidden');
+            active.style.display = 'flex';
+
+            document.getElementById('chatName').textContent = conv.name;
+            document.getElementById('chatType').textContent = conv.type === 'private' ? '私聊' : '群聊';
+            document.getElementById('chatAvatar').textContent = conv.avatarText;
+            document.getElementById('chatAvatar').classList.toggle('group', conv.type === 'group');
+
+            // Header actions
+            const actions = document.getElementById('chatHeaderActions');
+            if (conv.type === 'group') {
+                actions.innerHTML = `
+                    <button class="icon-btn" onclick="leaveCurrentGroup()" title="退出群"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+                    <button class="icon-btn" onclick="dissolveCurrentGroup()" title="解散群"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+                `;
+            } else {
+                actions.innerHTML = '';
+            }
+
+            renderChatMessages();
+        }
+
+        function renderChatMessages() {
+            const container = document.getElementById('chatMessages');
+            const conv = conversations.find(c => c.id === currentConvId);
+            if (!conv) return;
+            container.innerHTML = conv.messages.map(m => {
+                if (m.system) {
+                    return `<div class="msg system"><div class="msg-bubble">${escapeHtml(m.content)}</div></div>`;
+                }
+                const own = m.own;
+                const avatarText = own ? (currentUser.nickname?.charAt(0)?.toUpperCase()||'我') : (conv.type==='group'?(m.senderName?.charAt(0)?.toUpperCase()||'?'):conv.avatarText);
+                const senderName = own ? '' : (conv.type==='group'?(m.senderName||'?'):conv.name);
+                return `
+                    <div class="msg ${own?'own':''}">
+                        ${own?'':`<div class="msg-avatar ${conv.type==='group'?'group':''}">${avatarText}</div>`}
+                        <div class="msg-body">
+                            ${senderName?`<div class="msg-sender">${escapeHtml(senderName)}</div>`:''}
+                            <div class="msg-bubble">${escapeHtml(m.content)}</div>
+                            <div class="msg-time">${formatTime(m.timestamp)}</div>
+                        </div>
+                        ${own?`<div class="msg-avatar">${avatarText}</div>`:''}
+                    </div>
+                `;
+            }).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // ---- Sending Messages ----
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const content = input.value.trim();
+            if (!content || !currentConvId) return;
+            const conv = conversations.find(c => c.id === currentConvId);
+            if (!conv) return;
+            input.value = '';
+
+            try {
+                if (conv.type === 'private') {
+                    const res = await fetch(`${API_BASE}/api/messages/private`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ senderId: currentUser.userId, receiverId: conv.targetId, content })
+                    });
+                    if (!res.ok) throw new Error('发送失败');
+                } else {
+                    const res = await fetch(`${API_BASE}/api/messages/group`, {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ senderId: currentUser.userId, groupId: conv.targetId, content })
+                    });
+                    if (!res.ok) throw new Error('发送失败');
+                }
+            } catch (e) {
+                alert('发送失败: ' + e.message);
+            }
+        }
+
+        document.getElementById('sendBtn').onclick = sendMessage;
+        document.getElementById('messageInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+        });
+
+        // ---- Actions ----
+        window.openPrivateChat = async (userId) => {
+            const user = await fetchUser(userId);
+            activeTab = 'messages';
+            document.getElementById('navMessages').classList.add('active');
+            document.getElementById('navContacts').classList.remove('active');
+            openConv('private', userId, user.nickname, user.nickname?.charAt(0)?.toUpperCase());
+        };
+
+        window.openGroupChat = (groupId, name) => {
+            activeTab = 'messages';
+            document.getElementById('navMessages').classList.add('active');
+            document.getElementById('navContacts').classList.remove('active');
+            openConv('group', groupId, name || '群 ' + groupId, '群');
+        };
+
+        window.removeFriend = async (friendId) => {
+            if (!confirm('确定删除该好友吗？')) return;
+            try {
+                await fetch(`${API_BASE}/api/friends/${friendId}?userId=${currentUser.userId}`, { method: 'DELETE' });
+                friends = friends.filter(f => f.userId !== friendId);
+                conversations = conversations.filter(c => !(c.type==='private' && c.targetId===friendId));
+                if (currentConvId === getConvId('private', friendId)) { currentConvId = null; renderChat(); }
+                renderList();
+            } catch (e) { alert('删除失败'); }
+        };
+
+        window.leaveCurrentGroup = async () => {
+            const conv = conversations.find(c => c.id === currentConvId);
+            if (!conv || conv.type !== 'group') return;
+            if (!confirm('确定退出该群吗？')) return;
+            try {
+                await fetch(`${API_BASE}/api/groups/${conv.targetId}/members/${currentUser.userId}`, { method: 'DELETE' });
+                groups = groups.filter(g => g.groupId !== conv.targetId);
+                conversations = conversations.filter(c => c.id !== currentConvId);
+                currentConvId = null; renderChat(); renderList();
+            } catch (e) { alert('退出失败'); }
+        };
+
+        window.dissolveCurrentGroup = async () => {
+            const conv = conversations.find(c => c.id === currentConvId);
+            if (!conv || conv.type !== 'group') return;
+            if (!confirm('确定解散该群吗？')) return;
+            try {
+                await fetch(`${API_BASE}/api/groups/${conv.targetId}?operatorId=${currentUser.userId}`, { method: 'DELETE' });
+                groups = groups.filter(g => g.groupId !== conv.targetId);
+                conversations = conversations.filter(c => c.id !== currentConvId);
+                currentConvId = null; renderChat(); renderList();
+            } catch (e) { alert('解散失败'); }
+        };
+
+        // ---- Add Button / Modal ----
+        document.getElementById('btnAdd').onclick = () => {
+            if (activeTab === 'messages') {
+                showModal('发起会话', `
+                    <div class="modal-field"><label>用户 ID（私聊）</label><input type="number" id="modalUserId" placeholder="输入用户ID"></div>
+                    <div style="text-align:center;color:#999;font-size:12px;margin:8px 0;">或</div>
+                    <div class="modal-field"><label>群 ID（群聊）</label><input type="number" id="modalGroupId" placeholder="输入群ID"></div>
+                `, [
+                    { text: '取消', class: 'btn-cancel', onClick: hideModal },
+                    { text: '确定', class: 'btn-confirm', onClick: () => {
+                        const uid = document.getElementById('modalUserId').value;
+                        const gid = document.getElementById('modalGroupId').value;
+                        if (uid) { openPrivateChat(Number(uid)); hideModal(); }
+                        else if (gid) { openGroupChat(Number(gid), null); hideModal(); }
+                        else alert('请输入ID');
+                    }}
+                ]);
+            } else {
+                showModal('添加联系人 / 群', `
+                    <div style="display:flex;gap:8px;margin-bottom:12px;">
+                        <button class="btn-confirm" style="flex:1;padding:8px;border-radius:6px;border:none;cursor:pointer;" id="modalTabFriend">加好友</button>
+                        <button class="btn-cancel" style="flex:1;padding:8px;border-radius:6px;border:none;cursor:pointer;" id="modalTabGroup">建群/加群</button>
+                    </div>
+                    <div id="modalFriendPanel">
+                        <div class="modal-field"><label>用户 ID</label><input type="number" id="modalAddFriendId" placeholder="输入用户ID"></div>
+                    </div>
+                    <div id="modalGroupPanel" class="hidden">
+                        <div class="modal-field"><label>群名称（创建）</label><input type="text" id="modalCreateGroupName" placeholder="输入群名称"></div>
+                        <div class="modal-field"><label>群 ID（加入）</label><input type="number" id="modalJoinGroupId" placeholder="输入群ID"></div>
+                    </div>
+                `, [
+                    { text: '取消', class: 'btn-cancel', onClick: hideModal },
+                    { text: '确定', class: 'btn-confirm', onClick: async () => {
+                        const friendId = document.getElementById('modalAddFriendId')?.value;
+                        const groupName = document.getElementById('modalCreateGroupName')?.value;
+                        const joinGroupId = document.getElementById('modalJoinGroupId')?.value;
+                        if (friendId && !document.getElementById('modalFriendPanel').classList.contains('hidden')) {
+                            try {
+                                const res = await fetch(`${API_BASE}/api/friends`, {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ userId: currentUser.userId, friendId: Number(friendId) })
+                                });
+                                const data = await res.json();
+                                if (data.success) { await loadFriends(); renderList(); hideModal(); }
+                                else alert(data.error || '添加失败');
+                            } catch (e) { alert('添加失败'); }
+                        } else if (groupName) {
+                            try {
+                                const res = await fetch(`${API_BASE}/api/groups`, {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ creatorId: currentUser.userId, name: groupName })
+                                });
+                                const data = await res.json();
+                                if (data.groupId) {
+                                    groups.push({ groupId: data.groupId, name: data.name });
+                                    openGroupChat(data.groupId, data.name);
+                                    renderList(); hideModal();
+                                }
+                            } catch (e) { alert('创建群失败'); }
+                        } else if (joinGroupId) {
+                            try {
+                                const res = await fetch(`${API_BASE}/api/groups/${joinGroupId}/members`, {
+                                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ userId: currentUser.userId })
+                                });
+                                if (res.ok) {
+                                    const info = await fetch(`${API_BASE}/api/groups/${joinGroupId}`).then(r => r.json());
+                                    if (!groups.find(g => g.groupId === Number(joinGroupId))) {
+                                        groups.push({ groupId: Number(joinGroupId), name: info.name || '群 ' + joinGroupId });
+                                    }
+                                    openGroupChat(Number(joinGroupId), info.name);
+                                    renderList(); hideModal();
+                                } else { alert('加入群失败'); }
+                            } catch (e) { alert('加入群失败'); }
+                        }
+                    }}
+                ]);
+                setTimeout(() => {
+                    const t1 = document.getElementById('modalTabFriend');
+                    const t2 = document.getElementById('modalTabGroup');
+                    const p1 = document.getElementById('modalFriendPanel');
+                    const p2 = document.getElementById('modalGroupPanel');
+                    if (t1) t1.onclick = () => { t1.className='btn-confirm'; t2.className='btn-cancel'; p1.classList.remove('hidden'); p2.classList.add('hidden'); };
+                    if (t2) t2.onclick = () => { t2.className='btn-confirm'; t1.className='btn-cancel'; p2.classList.remove('hidden'); p1.classList.add('hidden'); };
+                }, 0);
+            }
+        };
+
+        function showModal(title, bodyHtml, buttons) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalBody').innerHTML = bodyHtml;
+            const btns = document.getElementById('modalBtns');
+            btns.innerHTML = buttons.map(b => `<button class="${b.class}">${b.text}</button>`).join('');
+            btns.querySelectorAll('button').forEach((btn, i) => btn.onclick = buttons[i].onClick);
+            document.getElementById('modalOverlay').classList.remove('hidden');
+        }
+        function hideModal() { document.getElementById('modalOverlay').classList.add('hidden'); }
+        document.getElementById('modalOverlay').onclick = (e) => { if (e.target === document.getElementById('modalOverlay')) hideModal(); };
+
+        // ---- Search ----
+        document.getElementById('searchInput').oninput = () => renderList();
+
+        // ---- Utils ----
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        function formatTime(ts) {
+            if (!ts) return '';
+            const d = new Date(ts);
+            const now = new Date();
+            const isToday = d.toDateString() === now.toDateString();
+            const hours = String(d.getHours()).padStart(2, '0');
+            const mins = String(d.getMinutes()).padStart(2, '0');
+            if (isToday) return `${hours}:${mins}`;
+            return `${d.getMonth()+1}/${d.getDate()} ${hours}:${mins}`;
+        }
+
+        // Initialize
+        switchTab('login');
+    </script>
+</body>
+</html>

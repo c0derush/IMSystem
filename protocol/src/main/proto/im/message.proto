@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package im;
+
+import "im/header.proto";
+import "im/heartbeat.proto";
+import "im/auth.proto";
+import "im/chat.proto";
+import "im/group.proto";
+
+option java_package = "com.im.proto";
+option java_multiple_files = true;
+
+/**
+ * 通用错误响应
+ */
+message ErrorResp {
+  int32 errorCode = 1;
+  string errorMessage = 2;
+}
+
+/**
+ * 通用协议包
+ * 通过 oneof body 实现不同命令码对应不同消息体
+ */
+message Packet {
+  PacketHeader header = 1;
+
+  oneof body {
+    HeartbeatReq heartbeatReq = 10;
+    HeartbeatResp heartbeatResp = 11;
+
+    LoginReq loginReq = 20;
+    LoginResp loginResp = 21;
+    RegisterReq registerReq = 22;
+    RegisterResp registerResp = 23;
+
+    TextMessage textMessage = 30;
+    MessageSendResp messageSendResp = 31;
+    MessageAck messageAck = 40;
+
+    CreateGroupReq createGroupReq = 50;
+    CreateGroupResp createGroupResp = 51;
+    JoinGroupReq joinGroupReq = 52;
+    LeaveGroupReq leaveGroupReq = 53;
+    KickMemberReq kickMemberReq = 54;
+    DissolveGroupReq dissolveGroupReq = 55;
+    GroupOpResp groupOpResp = 56;
+    GroupNotice groupNotice = 57;
+
+    ErrorResp errorResp = 99;
+  }
+}

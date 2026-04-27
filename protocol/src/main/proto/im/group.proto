@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package im;
+
+option java_package = "com.im.proto";
+option java_multiple_files = true;
+
+/**
+ * 创建群请求
+ */
+message CreateGroupReq {
+  string name = 1;
+}
+
+/**
+ * 创建群响应
+ */
+message CreateGroupResp {
+  bool success = 1;
+  int64 groupId = 2;
+  string name = 3;
+  int64 creatorId = 4;
+  int32 memberCount = 5;
+  string errorMessage = 6;
+}
+
+/**
+ * 加入群请求
+ */
+message JoinGroupReq {
+  int64 groupId = 1;
+}
+
+/**
+ * 退出群请求
+ */
+message LeaveGroupReq {
+  int64 groupId = 1;
+}
+
+/**
+ * 踢出成员请求（仅群主可操作）
+ */
+message KickMemberReq {
+  int64 groupId = 1;
+  int64 targetUserId = 2;
+}
+
+/**
+ * 解散群请求（仅群主可操作）
+ */
+message DissolveGroupReq {
+  int64 groupId = 1;
+}
+
+/**
+ * 群操作通用响应（join/leave/kick/dissolve 共用）
+ */
+message GroupOpResp {
+  // 操作类型：1=join, 2=leave, 3=kick, 4=dissolve
+  int32 opType = 1;
+  bool success = 2;
+  int64 groupId = 3;
+  string errorMessage = 4;
+}
+
+/**
+ * 群成员变更通知（推送给群其他成员）
+ */
+message GroupNotice {
+  int64 groupId = 1;
+  // 1=member_joined, 2=member_left, 3=member_kicked, 4=group_dissolved
+  int32 type = 2;
+  int64 operatorId = 3;
+  int64 targetUserId = 4;
+  int64 timestamp = 5;
+}

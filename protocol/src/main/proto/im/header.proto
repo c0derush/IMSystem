@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package im;
+
+import "im/command.proto";
+
+option java_package = "com.im.proto";
+option java_multiple_files = true;
+
+/**
+ * 协议帧头部
+ * 固定 8 bytes：magic(2) + version(1) + cmd(1) + bodyLength(4)
+ */
+message PacketHeader {
+  // 魔数 0xCAFE，用于快速识别非法数据包
+  uint32 magic = 1;
+
+  // 协议版本，当前为 1
+  uint32 version = 2;
+
+  // 命令码
+  Command cmd = 3;
+
+  // Body 长度（不含头部）
+  uint32 bodyLength = 4;
+}
